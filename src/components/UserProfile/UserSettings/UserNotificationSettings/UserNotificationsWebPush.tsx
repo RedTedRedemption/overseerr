@@ -5,17 +5,21 @@ import React from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { useToasts } from 'react-toast-notifications';
 import useSWR from 'swr';
+import * as Yup from 'yup';
 import { UserSettingsNotificationsResponse } from '../../../../../server/interfaces/api/userSettingsInterfaces';
 import { useUser } from '../../../../hooks/useUser';
 import globalMessages from '../../../../i18n/globalMessages';
 import Button from '../../../Common/Button';
 import LoadingSpinner from '../../../Common/LoadingSpinner';
-import { ALL_NOTIFICATIONS } from '../../../NotificationTypeSelector';
+import NotificationTypeSelector, {
+  ALL_NOTIFICATIONS,
+} from '../../../NotificationTypeSelector';
 
 const messages = defineMessages({
   webpushsettingssaved: 'Web push notification settings saved successfully!',
   webpushsettingsfailed: 'Web push notification settings failed to save.',
   enableWebPush: 'Enable Notifications',
+  validationTypes: 'You must select at least one notification type',
 });
 
 const UserWebPushSettings: React.FC = () => {
@@ -27,6 +31,16 @@ const UserWebPushSettings: React.FC = () => {
     user ? `/api/v1/user/${user?.id}/settings/notifications` : null
   );
 
+  const UserNotificationsWebPushSchema = Yup.object().shape({
+    types: Yup.number().when('enableWebPush', {
+      is: true,
+      then: Yup.number()
+        .nullable()
+        .moreThan(0, intl.formatMessage(messages.validationTypes)),
+      otherwise: Yup.number().nullable(),
+    }),
+  });
+
   if (!data && !error) {
     return <LoadingSpinner />;
   }
@@ -35,8 +49,9 @@ const UserWebPushSettings: React.FC = () => {
     <Formik
       initialValues={{
         enableWebPush: !!(data?.notificationTypes.webpush ?? true),
-        pgpKey: data?.pgpKey,
+        types: data?.notificationTypes.webpush ?? ALL_NOTIFICATIONS,
       }}
+      validationSchema={UserNotificationsWebPushSchema}
       enableReinitialize
       onSubmit={async (values) => {
         try {
@@ -45,7 +60,7 @@ const UserWebPushSettings: React.FC = () => {
             telegramChatId: data?.telegramChatId,
             telegramSendSilently: data?.telegramSendSilently,
             notificationTypes: {
-              webpush: values.enableWebPush ? ALL_NOTIFICATIONS : 0,
+              webpush: values.enableWebPush ? values.types : 0,
             },
           });
           addToast(intl.formatMessage(messages.webpushsettingssaved), {
@@ -62,7 +77,15 @@ const UserWebPushSettings: React.FC = () => {
         }
       }}
     >
-      {({ isSubmitting, isValid }) => {
+      {({
+        errors,
+        touched,
+        isSubmitting,
+        isValid,
+        values,
+        setFieldValue,
+        setFieldTouched,
+      }) => {
         return (
           <Form className="section">
             <div className="form-row">
@@ -77,6 +100,20 @@ const UserWebPushSettings: React.FC = () => {
                 />
               </div>
             </div>
+            <NotificationTypeSelector
+              disabled={!values.enableWebPush}
+              user={user}
+              currentTypes={values.types}
+              onUpdate={(newTypes) => {
+                setFieldValue('types', newTypes);
+                setFieldTouched('types');
+              }}
+              error={
+                errors.types && touched.types
+                  ? (errors.types as string)
+                  : undefined
+              }
+            />
             <div className="actions">
               <div className="flex justify-end">
                 <span className="inline-flex ml-3 rounded-md shadow-sm">

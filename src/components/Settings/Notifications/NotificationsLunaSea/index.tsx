@@ -13,6 +13,8 @@ import NotificationTypeSelector from '../../../NotificationTypeSelector';
 const messages = defineMessages({
   agentenabled: 'Enable Agent',
   webhookUrl: 'Webhook URL',
+  webhookUrlTip:
+    'Your user- or device-based <LunaSeaLink>notification webhook URL</LunaSeaLink>',
   validationWebhookUrl: 'You must provide a valid URL',
   profileName: 'Profile Name',
   profileNameTip: 'Only required if not using the <code>default</code> profile',
@@ -21,6 +23,7 @@ const messages = defineMessages({
   toastLunaSeaTestSending: 'Sending LunaSea test notification…',
   toastLunaSeaTestSuccess: 'LunaSea test notification sent!',
   toastLunaSeaTestFailed: 'LunaSea test notification failed to send.',
+  validationTypes: 'You must select at least one notification type',
 });
 
 const NotificationsLunaSea: React.FC = () => {
@@ -41,6 +44,13 @@ const NotificationsLunaSea: React.FC = () => {
         otherwise: Yup.string().nullable(),
       })
       .url(intl.formatMessage(messages.validationWebhookUrl)),
+    types: Yup.number().when('enabled', {
+      is: true,
+      then: Yup.number()
+        .nullable()
+        .moreThan(0, intl.formatMessage(messages.validationTypes)),
+      otherwise: Yup.number().nullable(),
+    }),
   });
 
   if (!data && !error) {
@@ -80,7 +90,15 @@ const NotificationsLunaSea: React.FC = () => {
         }
       }}
     >
-      {({ errors, touched, isSubmitting, values, isValid, setFieldValue }) => {
+      {({
+        errors,
+        touched,
+        isSubmitting,
+        values,
+        isValid,
+        setFieldValue,
+        setFieldTouched,
+      }) => {
         const testSettings = async () => {
           setIsTesting(true);
           let toastId: string | undefined;
@@ -129,6 +147,7 @@ const NotificationsLunaSea: React.FC = () => {
             <div className="form-row">
               <label htmlFor="enabled" className="checkbox-label">
                 {intl.formatMessage(messages.agentenabled)}
+                <span className="label-required">*</span>
               </label>
               <div className="form-input">
                 <Field type="checkbox" id="enabled" name="enabled" />
@@ -138,6 +157,22 @@ const NotificationsLunaSea: React.FC = () => {
               <label htmlFor="name" className="text-label">
                 {intl.formatMessage(messages.webhookUrl)}
                 <span className="label-required">*</span>
+                <span className="label-tip">
+                  {intl.formatMessage(messages.webhookUrlTip, {
+                    LunaSeaLink: function LunaSeaLink(msg) {
+                      return (
+                        <a
+                          href="https://docs.lunasea.app/lunasea/notifications/overseerr"
+                          className="text-white transition duration-300 hover:underline"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {msg}
+                        </a>
+                      );
+                    },
+                  })}
+                </span>
               </label>
               <div className="form-input">
                 <div className="form-input-field">
@@ -166,8 +201,17 @@ const NotificationsLunaSea: React.FC = () => {
               </div>
             </div>
             <NotificationTypeSelector
+              disabled={!values.enabled}
               currentTypes={values.types}
-              onUpdate={(newTypes) => setFieldValue('types', newTypes)}
+              onUpdate={(newTypes) => {
+                setFieldValue('types', newTypes);
+                setFieldTouched('types');
+              }}
+              error={
+                errors.types && touched.types
+                  ? (errors.types as string)
+                  : undefined
+              }
             />
             <div className="actions">
               <div className="flex justify-end">

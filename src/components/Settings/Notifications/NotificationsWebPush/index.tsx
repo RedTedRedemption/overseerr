@@ -7,7 +7,6 @@ import useSWR from 'swr';
 import globalMessages from '../../../../i18n/globalMessages';
 import Button from '../../../Common/Button';
 import LoadingSpinner from '../../../Common/LoadingSpinner';
-import NotificationTypeSelector from '../../../NotificationTypeSelector';
 
 const messages = defineMessages({
   agentenabled: 'Enable Agent',
@@ -35,13 +34,11 @@ const NotificationsWebPush: React.FC = () => {
       <Formik
         initialValues={{
           enabled: data.enabled,
-          types: data.types,
         }}
         onSubmit={async (values) => {
           try {
             await axios.post('/api/v1/settings/notifications/webpush', {
               enabled: values.enabled,
-              types: values.types,
               options: {},
             });
             addToast(intl.formatMessage(messages.webpushsettingssaved), {
@@ -58,7 +55,7 @@ const NotificationsWebPush: React.FC = () => {
           }
         }}
       >
-        {({ isSubmitting, values, isValid, setFieldValue }) => {
+        {({ isSubmitting, isValid }) => {
           const testSettings = async () => {
             setIsTesting(true);
             let toastId: string | undefined;
@@ -75,7 +72,6 @@ const NotificationsWebPush: React.FC = () => {
               );
               await axios.post('/api/v1/settings/notifications/webpush/test', {
                 enabled: true,
-                types: values.types,
                 options: {},
               });
 
@@ -104,15 +100,12 @@ const NotificationsWebPush: React.FC = () => {
               <div className="form-row">
                 <label htmlFor="enabled" className="checkbox-label">
                   {intl.formatMessage(messages.agentenabled)}
+                  <span className="label-required">*</span>
                 </label>
                 <div className="form-input">
                   <Field type="checkbox" id="enabled" name="enabled" />
                 </div>
               </div>
-              <NotificationTypeSelector
-                currentTypes={values.types}
-                onUpdate={(newTypes) => setFieldValue('types', newTypes)}
-              />
               <div className="actions">
                 <div className="flex justify-end">
                   <span className="inline-flex ml-3 rounded-md shadow-sm">

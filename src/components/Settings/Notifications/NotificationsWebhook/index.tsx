@@ -55,6 +55,7 @@ const messages = defineMessages({
   customJson: 'JSON Payload',
   templatevariablehelp: 'Template Variable Help',
   validationWebhookUrl: 'You must provide a valid URL',
+  validationTypes: 'You must select at least one notification type',
 });
 
 const NotificationsWebhook: React.FC = () => {
@@ -99,6 +100,13 @@ const NotificationsWebhook: React.FC = () => {
           }
         }
       ),
+    types: Yup.number().when('enabled', {
+      is: true,
+      then: Yup.number()
+        .nullable()
+        .moreThan(0, intl.formatMessage(messages.validationTypes)),
+      otherwise: Yup.number().nullable(),
+    }),
   });
 
   if (!data && !error) {
@@ -209,6 +217,7 @@ const NotificationsWebhook: React.FC = () => {
             <div className="form-row">
               <label htmlFor="enabled" className="checkbox-label">
                 {intl.formatMessage(messages.agentenabled)}
+                <span className="label-required">*</span>
               </label>
               <div className="form-input">
                 <Field type="checkbox" id="enabled" name="enabled" />
@@ -287,8 +296,17 @@ const NotificationsWebhook: React.FC = () => {
               </div>
             </div>
             <NotificationTypeSelector
+              disabled={!values.enabled}
               currentTypes={values.types}
-              onUpdate={(newTypes) => setFieldValue('types', newTypes)}
+              onUpdate={(newTypes) => {
+                setFieldValue('types', newTypes);
+                setFieldTouched('types');
+              }}
+              error={
+                errors.types && touched.types
+                  ? (errors.types as string)
+                  : undefined
+              }
             />
             <div className="actions">
               <div className="flex justify-end">

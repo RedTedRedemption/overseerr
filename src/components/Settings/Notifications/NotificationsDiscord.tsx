@@ -15,13 +15,15 @@ const messages = defineMessages({
   botUsername: 'Bot Username',
   botAvatarUrl: 'Bot Avatar URL',
   webhookUrl: 'Webhook URL',
-  webhookUrlPlaceholder: 'Server Settings → Integrations → Webhooks',
+  webhookUrlTip:
+    'Create a <DiscordWebhookLink>webhook integration</DiscordWebhookLink> in your server',
   discordsettingssaved: 'Discord notification settings saved successfully!',
   discordsettingsfailed: 'Discord notification settings failed to save.',
   toastDiscordTestSending: 'Sending Discord test notification…',
   toastDiscordTestSuccess: 'Discord test notification sent!',
   toastDiscordTestFailed: 'Discord test notification failed to send.',
   validationUrl: 'You must provide a valid URL',
+  validationTypes: 'You must select at least one notification type',
 });
 
 const NotificationsDiscord: React.FC = () => {
@@ -45,6 +47,13 @@ const NotificationsDiscord: React.FC = () => {
         otherwise: Yup.string().nullable(),
       })
       .url(intl.formatMessage(messages.validationUrl)),
+    types: Yup.number().when('enabled', {
+      is: true,
+      then: Yup.number()
+        .nullable()
+        .moreThan(0, intl.formatMessage(messages.validationTypes)),
+      otherwise: Yup.number().nullable(),
+    }),
   });
 
   if (!data && !error) {
@@ -87,7 +96,15 @@ const NotificationsDiscord: React.FC = () => {
         }
       }}
     >
-      {({ errors, touched, isSubmitting, values, isValid, setFieldValue }) => {
+      {({
+        errors,
+        touched,
+        isSubmitting,
+        values,
+        isValid,
+        setFieldValue,
+        setFieldTouched,
+      }) => {
         const testSettings = async () => {
           setIsTesting(true);
           let toastId: string | undefined;
@@ -137,9 +154,40 @@ const NotificationsDiscord: React.FC = () => {
             <div className="form-row">
               <label htmlFor="enabled" className="checkbox-label">
                 {intl.formatMessage(messages.agentenabled)}
+                <span className="label-required">*</span>
               </label>
               <div className="form-input">
                 <Field type="checkbox" id="enabled" name="enabled" />
+              </div>
+            </div>
+            <div className="form-row">
+              <label htmlFor="name" className="text-label">
+                {intl.formatMessage(messages.webhookUrl)}
+                <span className="label-required">*</span>
+                <span className="label-tip">
+                  {intl.formatMessage(messages.webhookUrlTip, {
+                    DiscordWebhookLink: function DiscordWebhookLink(msg) {
+                      return (
+                        <a
+                          href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks"
+                          className="text-white transition duration-300 hover:underline"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {msg}
+                        </a>
+                      );
+                    },
+                  })}
+                </span>
+              </label>
+              <div className="form-input">
+                <div className="form-input-field">
+                  <Field id="webhookUrl" name="webhookUrl" type="text" />
+                </div>
+                {errors.webhookUrl && touched.webhookUrl && (
+                  <div className="error">{errors.webhookUrl}</div>
+                )}
               </div>
             </div>
             <div className="form-row">
@@ -148,12 +196,7 @@ const NotificationsDiscord: React.FC = () => {
               </label>
               <div className="form-input">
                 <div className="form-input-field">
-                  <Field
-                    id="botUsername"
-                    name="botUsername"
-                    type="text"
-                    placeholder={intl.formatMessage(messages.botUsername)}
-                  />
+                  <Field id="botUsername" name="botUsername" type="text" />
                 </div>
                 {errors.botUsername && touched.botUsername && (
                   <div className="error">{errors.botUsername}</div>
@@ -166,42 +209,25 @@ const NotificationsDiscord: React.FC = () => {
               </label>
               <div className="form-input">
                 <div className="form-input-field">
-                  <Field
-                    id="botAvatarUrl"
-                    name="botAvatarUrl"
-                    type="text"
-                    placeholder={intl.formatMessage(messages.botAvatarUrl)}
-                  />
+                  <Field id="botAvatarUrl" name="botAvatarUrl" type="text" />
                 </div>
                 {errors.botAvatarUrl && touched.botAvatarUrl && (
                   <div className="error">{errors.botAvatarUrl}</div>
                 )}
               </div>
             </div>
-            <div className="form-row">
-              <label htmlFor="name" className="text-label">
-                {intl.formatMessage(messages.webhookUrl)}
-                <span className="label-required">*</span>
-              </label>
-              <div className="form-input">
-                <div className="form-input-field">
-                  <Field
-                    id="webhookUrl"
-                    name="webhookUrl"
-                    type="text"
-                    placeholder={intl.formatMessage(
-                      messages.webhookUrlPlaceholder
-                    )}
-                  />
-                </div>
-                {errors.webhookUrl && touched.webhookUrl && (
-                  <div className="error">{errors.webhookUrl}</div>
-                )}
-              </div>
-            </div>
             <NotificationTypeSelector
+              disabled={!values.enabled}
               currentTypes={values.types}
-              onUpdate={(newTypes) => setFieldValue('types', newTypes)}
+              onUpdate={(newTypes) => {
+                setFieldValue('types', newTypes);
+                setFieldTouched('types');
+              }}
+              error={
+                errors.types && touched.types
+                  ? (errors.types as string)
+                  : undefined
+              }
             />
             <div className="actions">
               <div className="flex justify-end">
