@@ -87,6 +87,7 @@ export interface MainSettings {
   originalLanguage: string;
   trustProxy: boolean;
   partialRequestsEnabled: boolean;
+  locale: string;
 }
 
 interface PublicSettings {
@@ -105,6 +106,7 @@ interface FullPublicSettings extends PublicSettings {
   cacheImages: boolean;
   vapidPublic: string;
   enablePushRegistration: boolean;
+  locale: string;
 }
 
 export interface NotificationAgentConfig {
@@ -248,6 +250,7 @@ class Settings {
         originalLanguage: '',
         trustProxy: false,
         partialRequestsEnabled: true,
+        locale: 'en',
       },
       plex: {
         name: '',
@@ -410,6 +413,7 @@ class Settings {
       cacheImages: this.data.main.cacheImages,
       vapidPublic: this.vapidPublic,
       enablePushRegistration: this.data.notifications.agents.webpush.enabled,
+      locale: this.data.main.locale,
     };
   }
 
