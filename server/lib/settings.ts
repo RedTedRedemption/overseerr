@@ -132,6 +132,7 @@ export interface NotificationAgentEmail extends NotificationAgentConfig {
     smtpHost: string;
     smtpPort: number;
     secure: boolean;
+    requireTls: boolean;
     authUser?: string;
     authPass?: string;
     allowSelfSigned: boolean;
@@ -271,6 +272,7 @@ class Settings {
               smtpHost: '127.0.0.1',
               smtpPort: 587,
               secure: false,
+              requireTls: false,
               allowSelfSigned: false,
               senderName: 'Overseerr',
             },
