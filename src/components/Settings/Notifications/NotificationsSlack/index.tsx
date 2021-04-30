@@ -183,6 +183,10 @@ const NotificationsSlack: React.FC = () => {
               onUpdate={(newTypes) => {
                 setFieldValue('types', newTypes);
                 setFieldTouched('types');
+
+                if (newTypes) {
+                  setFieldValue('enabled', true);
+                }
               }}
               error={
                 errors.types && touched.types
